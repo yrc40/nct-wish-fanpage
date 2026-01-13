@@ -1,0 +1,257 @@
+/* 全局字體設定 */
+:root {
+  --bg-color: #0a0a2a; /* 深夜空藍 */
+  --accent-color: #00ff00; /* 復古綠 */
+  --pixel-border: 4px solid #fff;
+}
+
+/* --- 容器與背景 --- */
+.wish-container {
+    font-family: 'Press Start 2P', 'DotGothic16', sans-serif;
+    background: linear-gradient(to bottom, #020210, #1a1a40);
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* --- A. 娃娃專用樣式 (Flying Doll) --- */
+.flying-doll {
+  position: absolute;
+  bottom: -150px;
+  width: 90px;
+  height: auto;
+  
+  z-index: 9999;          /* 強制由最上層顯示 (避免被星星背景蓋住) */
+  /* ---------------------------------- */
+
+  /* 保持原本的設定 */
+  image-rendering: pixelated;
+  opacity: 0.9;
+  
+  animation-name: floatUp;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+/* --- B. 願望專用樣式 (Flying Wish) --- */
+.flying-wish {
+  position: absolute;
+  bottom: -100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10; /* 在娃娃的前面，確保看得到字 */
+  
+  animation-name: floatUp;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+.pixel-icon {
+  /* 讓星星/愛心有發光效果 */
+  filter: drop-shadow(0 0 5px gold);
+  margin-bottom: 5px;
+  animation: spin 3s infinite linear; /* 讓星星慢慢轉 */
+}
+
+.wish-bubble {
+  background: white;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px; /* 稍微圓角 */
+  font-size: 0.9rem;
+  border: 3px solid black; /* 漫畫風格邊框 */
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.5); /* 像素陰影 */
+  white-space: nowrap;
+  
+  /* 讓氣泡有一個小尖角指向上面 (Optional) */
+  position: relative;
+}
+
+/* --- 動畫關鍵影格 --- */
+
+/* 1. 往上飛 (通用) */
+@keyframes floatUp {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-120vh); opacity: 0; }
+}
+
+/* 2. 上下擺動 (給娃娃用) */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+  /* 注意：如果 floatUp 和 bounce 衝突，可能需要用巢狀 div 結構，但這裡我們先簡單處理 */
+}
+
+/* 3. 旋轉 (給星星用) */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* 標題樣式 */
+.pixel-header {
+  margin-top: 50px;
+  z-index: 10;
+  text-align: center;
+  text-shadow: 4px 4px 0px #ff00de; /* 霓虹陰影 */
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-top: 10px;
+}
+
+/* 飄浮區域與動畫 */
+.floating-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 讓點擊可以穿透到下層 */
+  z-index: 1;
+}
+
+.floating-item {
+  position: absolute;
+  bottom: -50px; /* 從螢幕下方開始 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation-name: floatUp;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0.9;
+}
+
+.wish-text {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  margin-top: 5px;
+  border: 2px solid white;
+}
+
+.pixel-icon {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-50vh) translateX(20px); /* 稍微左右擺動 */
+  }
+  100% {
+    transform: translateY(-110vh) translateX(-20px);
+    opacity: 0;
+  }
+}
+
+/* 底部控制區 */
+.control-panel {
+  position: absolute;
+  bottom: 40px;
+  z-index: 20;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  /* --- 修改這裡 --- */
+  z-index: 9999 !important; /* 強制最高層級 */
+  pointer-events: auto;     /* 確保一定要能接受點擊 */
+}
+
+.pixel-form {
+  display: flex;
+  gap: 10px;
+  background: #222;
+  padding: 10px;
+  border: 4px solid white;
+  box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+}
+
+.pixel-input {
+  font-family: 'Press Start 2P', 'DotGothic16', sans-serif;
+  background: transparent;
+  border: none;
+  color: white;
+  outline: none;
+  width: 250px;
+  font-size: 0.8rem;
+}
+
+.pixel-btn {
+  font-family: 'Press Start 2P', 'DotGothic16', sans-serif;
+  background: #ff00de;
+  border: 2px solid white;
+  color: white;
+  padding: 10px 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: transform 0.1s;
+}
+
+.pixel-btn:active {
+  transform: scale(0.95);
+}
+
+.pixel-nav {
+    display: flex;
+    gap: 20px;
+    font-size: 0.8rem;
+    color: #88ff88;
+    cursor: pointer;
+}
+
+/* 簡單的背景星光點綴 (用 CSS 繪製) */
+.stars-bg {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  background: white;
+  box-shadow: 
+    10vw 20vh #fff, 
+    30vw 40vh #fff, 
+    70vw 10vh #fff, 
+    80vw 80vh #fff,
+    40vw 60vh #fff; 
+    /* 可以增加更多陰影來製造更多星星 */
+  animation: twinkle 5s infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* 手機版響應式微調 */
+@media (max-width: 600px) {
+    .pixel-input {
+        width: 150px;
+    }
+    .pixel-header h1 {
+        font-size: 1.5rem;
+    }
+}

@@ -1,0 +1,663 @@
+/* =========================================
+   1. 全局變數與基礎設定
+   ========================================= */
+:root {
+  --bg-color: #0a0a2a; /* 深夜空藍 */
+  --sidebar-bg: #222;
+  --accent-color: #00ff00; /* 復古綠 */
+  --active-color: #ff00de; /* 霓虹粉 */
+  --border-color: #fff;
+}
+
+/* 確保容器佔滿螢幕並套用背景色 */
+.map-page-container {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--bg-color); /* 這裡控制背景色，不能掉 */
+  color: white;
+  font-family: 'Press Start 2P', 'DotGothic16', sans-serif;
+  overflow: hidden; /* 如果內容溢出，這裡會裁切掉 */
+  position: relative;
+  box-sizing: border-box; /* 全局或局部的 box-sizing 設定 */
+}
+
+/* 確保所有元素使用 border-box，避免 padding 撐大寬高導致溢出 */
+.map-page-container * {
+  box-sizing: border-box;
+}
+
+/* =========================================
+   2. 世界地圖場景 (World View)
+   ========================================= */
+.world-view {
+  display: flex; /* 恢復為 flex 置中 [REVERTED] */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  
+  background-image: 
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(white 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: 0 0, 25px 25px;
+}
+/* 移除了 world-view:active 樣式 */
+
+.world-nav-bar {
+  position: absolute; /* 恢復 absolute [REVERTED] */
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+}
+
+.pixel-title {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  text-shadow: 4px 4px 0 var(--active-color);
+  text-align: center;
+  line-height: 1.5;
+  /* pointer-events: none; 移除這行 [REVERTED] */
+}
+
+.pixel-world-map {
+  position: relative;
+  /* 恢復為之前「放大版」的樣式，但不是「超大拖曳版」 */
+  width: auto;
+  max-width: 95%; /* 保持上上一步的 "放大一點" 需求 */
+  height: auto; 
+  border: 4px solid white;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.world-map-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 85vh; /* 保持上上一步的 "放大一點" 需求 */
+  image-rendering: pixelated;
+  /* user-select, -webkit-user-drag 移除 [REVERTED] */
+}
+
+.map-hotspot {
+  position: absolute;
+  background: white;
+  border: 4px solid black;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  z-index: 10;
+  
+  /* [新增] 改為水平排列 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.map-hotspot:hover {
+  transform: scale(1.1);
+  background: #ffeb3b;
+}
+
+/* 恢復位置設定 (假設是修正重疊前的版本) */
+/* [修正] 將按鈕拉開距離，避免加了文字後重疊 */
+.kr-spot { top: 31%; left: 80%; } 
+.jp-spot { top: 38%; left: 89%; }
+
+.flag-icon { 
+  font-size: 1.5rem; 
+  display: block; 
+  margin-bottom: 0; /* 移除底部間距 */
+  line-height: 1;
+}
+
+/* =========================================
+   3. 詳細國家地圖場景 (Detail View)
+   ========================================= */
+.detail-map-view.new-style {
+  display: flex;
+  height: 100%;
+  padding-bottom: 70px; /* 留位置給底部導覽列 */
+  position: relative;
+}
+
+/* --- 側邊欄 (Sidebar) --- */
+.theme-sidebar {
+  width: 280px; /* [修改] 改窄一點，因為現在不需要放圖片了，省空間 */
+  min-width: 280px;
+  background: var(--sidebar-bg);
+  border-right: 4px solid var(--border-color);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.back-btn { margin-bottom: 0; }
+
+.sidebar-title {
+  font-size: 1.2rem;
+  color: var(--accent-color);
+  margin-bottom: 5px;
+  border-bottom: 2px dashed #666;
+  padding-bottom: 10px;
+}
+
+.section-subtitle {
+  font-size: 0.8rem;
+  color: #ffff00;
+  margin-top: 5px; /* 微調 */
+  margin-bottom: 8px; /* 微調 */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* === [修改] 新的主題列表樣式 (取代原本的 theme-grid) === */
+.theme-list {
+  display: flex;
+  flex-direction: column; /* 垂直排列 */
+  gap: 8px; /* 按鈕之間的間距 */
+  margin-bottom: 15px;
+}
+
+.theme-list-btn {
+  font-family: inherit;
+  background: transparent;
+  border: 2px solid #555;
+  color: #aaa;
+  padding: 10px 15px; /* 舒適的點擊範圍 */
+  cursor: pointer;
+  text-align: left; /* 文字靠左 */
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  position: relative;
+  letter-spacing: 1px; 
+}
+
+/* 滑鼠移過去的效果 */
+.theme-list-btn:hover {
+  border-color: white;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  padding-left: 20px; /* 稍微往右移一點點，增加互動感 */
+}
+
+/* 被選中的效果 */
+.theme-list-btn.active {
+  background: var(--active-color);
+  color: white;
+  border-color: white;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* 選中時前面加個小箭頭 (偽元素) */
+.theme-list-btn.active::before {
+  content: "▶";
+  position: absolute;
+  left: 5px;
+  font-size: 0.6rem;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 類型篩選 (Filters) */
+.filter-list-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* --- 地圖區域 --- */
+.leaflet-map-wrapper {
+  flex: 1;
+  background: #ddd;
+  position: relative;
+  z-index: 1;
+  /* 確保 Leaflet 地圖不會覆蓋 Bottom Nav (雖然 Nav 應該要是 absolute) */
+}
+
+/* --- 底部導覽列 (Bottom Nav) --- */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background: var(--sidebar-bg);
+  border-top: 4px solid var(--border-color);
+  z-index: 1000; /* [修正] 提高層級，確保不會被地圖覆蓋 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav-btn {
+  font-family: inherit;
+  background: #333;
+  color: white;
+  border: 3px solid #555;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  width: 90%;
+  justify-content: center;
+  max-width: 400px;
+}
+
+.bottom-nav-btn:hover { background: #444; border-color: white; }
+
+.bottom-nav-btn.active {
+  background: var(--active-color);
+  border-color: white;
+  box-shadow: 0 0 10px var(--active-color);
+  color: black;
+  font-weight: bold;
+}
+
+/* =========================================
+   4. 漂浮詳細頁面 (Modal)
+   ========================================= */
+.location-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+  padding: 20px;
+  padding-bottom: 80px;
+}
+
+.location-modal-card {
+  background: #fff;
+  color: #000;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff0055;
+  color: white;
+  border: 2px solid black;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.close-modal-btn:hover { transform: scale(1.1); }
+
+.modal-header {
+  background: #ffeb3b;
+  padding: 15px;
+  padding-right: 40px;
+  border-bottom: 4px solid #000;
+}
+
+.modal-title {
+  font-size: 1rem;
+  margin: 5px 0 0 0;
+  line-height: 1.4;
+}
+
+.modal-tags { display: flex; gap: 5px; }
+
+.modal-body {
+  padding: 15px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-image-container {
+  width: 100%;
+  height: 250px; /* 稍微加高，給圖片更多空間 */
+  background: #000; /* 改為黑底，讓照片更突出 */
+  border: 2px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.modal-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* 關鍵：保持原始比例，不裁切 */
+}
+
+.no-image-placeholder { color: #aaa; font-size: 1.5rem; }
+
+.modal-desc {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+.google-maps-btn.large {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.8rem;
+  margin-top: 10px;
+  background: #4285F4;
+  border: 2px solid black;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+}
+
+.google-maps-btn.large:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+}
+
+/* [新] Naver Map 專用樣式 (綠色) */
+.google-maps-btn.large.naver-style {
+  background: #03C75A; /* Naver Green */
+  border-color: #fff;
+  color: white;
+}
+
+.google-maps-btn.large.naver-style:hover {
+  background: #02b351;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   5. 共用元件與覆寫
+   ========================================= */
+.pixel-btn-small {
+  font-family: inherit;
+  background: var(--active-color);
+  color: white;
+  border: 2px solid white;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+  font-size: 0.7rem;
+}
+
+/* Checkbox */
+.pixel-checkbox {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  user-select: none;
+  margin-bottom: 5px;
+}
+
+.pixel-checkbox input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+.checkmark {
+  position: absolute; top: -2px; left: 0; height: 18px; width: 18px;
+  background-color: #eee; border: 3px solid #000; box-shadow: 2px 2px 0px #fff;
+}
+.pixel-checkbox input:checked ~ .checkmark { background-color: #2196F3; }
+.checkmark:after { content: ""; position: absolute; display: none; }
+.pixel-checkbox input:checked ~ .checkmark:after { display: block; }
+.pixel-checkbox .checkmark:after {
+  left: 4px; top: 1px; width: 4px; height: 8px;
+  border: solid white; border-width: 0 3px 3px 0; transform: rotate(45deg);
+}
+
+/* Leaflet Popup (雖然被 Modal 取代，但留著以防萬一) */
+.leaflet-popup-content-wrapper {
+  background: #222 !important; color: white !important;
+  border: 4px solid white; border-radius: 12px !important;
+  font-family: inherit !important; font-size: 0.7rem !important;
+}
+.leaflet-popup-tip { background: white !important; }
+.theme-tag { font-size: 0.5rem; background: var(--active-color); color: white; padding: 2px 4px; border-radius: 4px; }
+
+/* Mobile Only: Handle Bar Styles (Hidden on Desktop) */
+.mobile-sheet-handle { display: none; }
+
+/* =========================================
+   6. 手機版 RWD 設定
+   ========================================= */
+@media (max-width: 768px) {
+  /* 手機版：允許容器捲動 (拖曳效果) */
+  .world-view {
+    cursor: default; /* 手機版不需要 grab cursor，因為是原生 touch 捲動 */
+    
+    /* [新增] 手機版恢復捲動邏輯 */
+    display: block; /* 覆盖 desktop 的 flex */
+    overflow: auto; /* 允許捲動 */
+    justify-content: flex-start;
+    padding-top: 60px;
+  }
+
+  /* 固定導覽列與標題 */
+  .world-nav-bar {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+  }
+
+  .pixel-title {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    position: sticky; /* 讓標題稍微黏住或直接跟著捲動都可以，這裡選 sticky */
+    top: 0;
+    z-index: 50;
+    background: rgba(10, 10, 42, 0.8); /* 半透明背景防止與地圖重疊看不清 */
+    padding: 10px 0;
+    width: 100%;
+  }
+
+  /* 地圖強制放大，超出螢幕範圍 */
+  .pixel-world-map {
+    width: 180vw; /* 寬度設為視窗的 1.8 倍 */
+    max-width: none; /* 移除最大寬度限制 */
+    margin: 0 auto; /* 水平置中 */
+  }
+
+  .world-map-image {
+    max-height: none; /* 移除高度限制，依寬度等比縮放 */
+  }
+
+  .map-hotspot { padding: 5px; font-size: 0.6rem; }
+  .flag-icon { font-size: 1rem; }
+  /* 手機版可能需要微調按鈕位置，如果圖片本身比例沒變，百分比應該不用動 */
+  .kr-spot { left: 81%; top: 31%; } /* 微調避免重疊 */
+  .jp-spot { left: 88%; top: 38%; }
+
+  /* 詳細地圖改為上下結構 */
+  .detail-map-view.new-style {
+      flex-direction: column;
+      padding-bottom: 0; /* 底部導覽列高度由 fixed 的 bottom-nav 處理 */
+      overflow: hidden; /* 防止整個頁面捲動 */
+  }
+
+  /* --- [修改] 側邊欄變成 Bottom Sheet --- */
+  .theme-sidebar {
+      position: fixed;
+      bottom: 70px; /* 位於 Bottom Nav 上方 */
+      left: 0;
+      width: 100%;
+      height: auto;
+      max-height: 70vh; /* 展開時最大高度 */
+      min-height: 50px; /* 收起時的高度 (把手部分) */
+      
+      background: var(--sidebar-bg); /* 深色背景 */
+      border-right: none;
+      border-top: 2px solid white;
+      border-radius: 20px 20px 0 0; /* 上方圓角 */
+      
+      padding: 0; /* 內部用 .sidebar-scroll-content 控制 padding */
+      flex-direction: column;
+      z-index: 500; /* 高於地圖，高於 bottom-nav */
+      
+      transform: translateY(calc(100% - 40px)); /* 預設收起，只露出一點點把手 */
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 平滑過渡 */
+      box-shadow: 0 -5px 15px rgba(0,0,0,0.5); /* 陰影 */
+  }
+
+  /* 展開狀態 class */
+  .theme-sidebar.mobile-open {
+      transform: translateY(0); /* 完全展開 */
+  }
+
+  /* 內部捲動區域 */
+  .sidebar-scroll-content {
+      padding: 20px;
+      overflow-y: auto;
+      height: 100%;
+  }
+
+  /* Handle (把手) 樣式 */
+  .mobile-sheet-handle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 40px; /* 点击区域高度 */
+      width: 100%;
+      cursor: pointer;
+      background: #333; /* 稍微亮一點，區分 Header */
+      border-radius: 20px 20px 0 0;
+      border-bottom: 1px dashed #555;
+      flex-shrink: 0;
+  }
+
+  .handle-bar {
+      width: 40px;
+      height: 4px;
+      background: #888;
+      border-radius: 2px;
+      margin-bottom: 4px;
+  }
+  
+  .mobile-sheet-title {
+      font-size: 0.6rem;
+      color: #aaa;
+      letter-spacing: 1px;
+  }
+
+  .sidebar-title { font-size: 1rem; margin-bottom: 5px; }
+  .section-subtitle { margin: 5px 0; }
+
+  /* [修改] 主題列表恢復為垂直排列 (在 sheet 裡面不需要橫向捲動了) */
+  .theme-list {
+      flex-direction: column; 
+      overflow-x: hidden; 
+      gap: 8px;
+      padding-bottom: 10px;
+  }
+  
+  /* [修改] 手機版主題按鈕樣式 */
+  .theme-list-btn {
+      white-space: normal; /* 允許換行 */
+      padding: 10px 15px;
+      font-size: 0.8rem;
+      border-radius: 0; /* 恢復直角或微圓角 */
+      border: 2px solid #555;
+      background: transparent;
+      text-align: left;
+  }
+
+  .theme-list-btn:hover { padding-left: 20px; }
+  
+  .theme-list-btn.active {
+      background: var(--active-color);
+      border-color: white;
+  }
+  
+  .theme-list-btn.active::before {
+      content: "▶"; /* 恢復箭頭 */
+  }
+
+  /* Filters */
+  .filter-list-horizontal { gap: 12px; }
+  .pixel-checkbox { font-size: 0.7rem; padding-left: 28px; }
+  .checkmark { width: 18px; height: 18px; }
+
+  .leaflet-map-wrapper { height: 100%; }
+  
+  /* Bottom Nav 保持固定在最底部 */
+  .bottom-nav { height: 70px; z-index: 400; }
+  .bottom-nav-btn { font-size: 0.7rem; padding: 8px 15px; }
+
+  /* Modal 在手機版樣式調整：改為置中彈窗 */
+  .location-modal-overlay {
+      align-items: center; /* 恢復置中 */
+      padding-bottom: 20px; /* 稍微留點空間 */
+  }
+  
+  .location-modal-card {
+      width: 90%;
+      max-height: 70vh;
+      border-radius: 12px; /* 增加一點圓角讓它看起來像卡片 */
+  }
+  
+  .modal-image-container { height: 200px; } /* 讓圖片區域也稍微大一點，適應置中版面 */
+}
+
+/* 自訂地圖標籤 (Tooltip) */
+.leaflet-tooltip.pixel-map-label {
+  background-color: transparent; /* 去掉預設白底 */
+  border: none; /* 去掉預設邊框 */
+  box-shadow: none; /* 去掉陰影 */
+  color: #ffff00; /* 黃色文字，比較顯眼 */
+  font-family: 'Press Start 2P', sans-serif; /* 像素字體 */
+  font-size: 0.6rem; /* 字小一點 */
+  text-shadow: 
+    2px 0 #000, -2px 0 #000, 
+    0 2px #000, 0 -2px #000,
+    1px 1px #000, -1px -1px #000, 
+    1px -1px #000, -1px 1px #000; /* 手動做出黑色描邊效果，讓文字在地圖上看得清楚 */
+  white-space: nowrap; /* 不換行 */
+  margin-top: 5px;
+}
+
+/* 為了蓋過 Leaflet 預設的箭頭樣式，我們把它隱藏 */
+.leaflet-tooltip-bottom:before {
+  display: none;
+}
