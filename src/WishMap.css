@@ -30,11 +30,17 @@
    2. 世界地圖場景 (World View)
    ========================================= */
 .world-view {
-  display: flex; /* 恢復為 flex 置中 [REVERTED] */
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  /* display: flex;  Replaced with block to allow full scrolling */
+  display: block; 
+  text-align: center; /* Center the map horizontally */
+  position: relative;
+  width: 100%;
   height: 100%;
+  overflow: auto; /* Allow scrolling on both mobile and desktop */
+  
+  /* Hide scrollbar for cleaner look */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
   
   background-image: 
     radial-gradient(white 1px, transparent 1px),
@@ -42,13 +48,17 @@
   background-size: 50px 50px;
   background-position: 0 0, 25px 25px;
 }
+.world-view::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
 /* 移除了 world-view:active 樣式 */
 
 .world-nav-bar {
-  position: absolute; /* 恢復 absolute [REVERTED] */
+  position: fixed; /* fix: keep it visible during scroll */
   top: 20px;
   left: 20px;
-  z-index: 100;
+  z-index: 1000; /* Ensure it's above everything including zoomed map */
 }
 
 .pixel-title {
@@ -63,22 +73,32 @@
 .pixel-world-map {
   position: relative;
   /* 恢復為之前「放大版」的樣式，但不是「超大拖曳版」 */
-  width: auto;
+  width: fit-content; /* Ensure container wraps content tightly */
   max-width: 95%; /* 保持上上一步的 "放大一點" 需求 */
   height: auto; 
   border: 4px solid white;
   display: inline-block;
   flex-shrink: 0;
   margin-bottom: 0;
+  line-height: 0; /* Remove vertical gap under image */
 }
 
 .world-map-image {
   display: block;
-  width: 100%;
+  /* Key fix: Use max-width/height to let aspect ratio drive dimensions */
+  /* Remove width: 100% to prevent container filling behavior that breaks aspect ratio tracking */
+  width: auto; 
+  max-width: 100%; 
   height: auto;
   max-height: 85vh; /* 保持上上一步的 "放大一點" 需求 */
-  image-rendering: pixelated;
+  
+  /* 這行是關鍵，強制瀏覽器使用最近鄰插值法（Nearest-neighbor）來放大圖片 */
+  image-rendering: pixelated; 
+  /* 為了兼容不同瀏覽器，可以多加下面這行 */
+  image-rendering: crisp-edges;
+
   /* user-select, -webkit-user-drag 移除 [REVERTED] */
+  -webkit-user-drag: none; /* Add webkit user drag functionality for Safari */
 }
 
 .map-hotspot {
@@ -98,23 +118,80 @@
   align-items: center;
   gap: 8px;
   font-weight: bold;
+  
+  /* Compatibility fix: Add user-select for various browsers */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  /* Center the button on its coordinate for better responsiveness */
+  transform: translate(-50%, -50%);
 }
 
 .map-hotspot:hover {
-  transform: scale(1.1);
+  transform: translate(-50%, -50%) scale(1.1);
   background: #ffeb3b;
 }
 
-/* 恢復位置設定 (假設是修正重疊前的版本) */
-/* [修正] 將按鈕拉開距離，避免加了文字後重疊 */
-.kr-spot { top: 31%; left: 80%; } 
-.jp-spot { top: 38%; left: 89%; }
+/* ============================================================
+   4. 按鈕位置設定 (Button Positions)
+   您可以分別調整「電腦版」與「手機版」的座標 (%)
+   ============================================================ */
 
-.flag-icon { 
-  font-size: 1.5rem; 
-  display: block; 
-  margin-bottom: 0; /* 移除底部間距 */
-  line-height: 1;
+/* --- 電腦版 (Desktop / Default) --- */
+.kr-spot { top: 36%; left: 86%; } 
+.jp-spot { top: 39%; left: 93%; }
+.tw-spot { top: 45%; left: 89%; } 
+.th-spot { top: 55%; left: 80%; }
+.asia-spot { top: 30%; left: 72%; background-color: #ff9800; color: #000; z-index: 20; }
+.europe-spot { top: 25%; left: 53%; background-color: #2196F3; color: #fff; z-index: 20; } /* 歐洲按鈕 */
+.es-spot { top: 35%; left: 43%; }
+.sg-spot { top: 63%; left: 82%; } /* Desktop Singapore */
+.mo-spot { top: 52%; left: 88%; } /* Desktop Macau - close to HK/TW/South China */
+
+/* --- 手機版 (Mobile - 螢幕寬度小於 768px) --- */
+@media (max-width: 768px) {
+   .kr-spot { top: 40%; left: 85%; } 
+   .jp-spot { top: 40%; left: 98%; }
+   .tw-spot { top: 40%; left: 90%; } 
+   .th-spot { top: 50%; left: 80%; }
+   .sg-spot { top: 58%; left: 82%; } /* Mobile Singapore */
+   .mo-spot { top: 48%; left: 86%; } /* Mobile Macau */
+   .asia-spot { top: 30%; left: 72%; }
+   .europe-spot { top: 25%; left: 53%; }
+   .es-spot { top: 35%; left: 40%; }
+}
+
+
+/* Zoomed State for Continent View */
+.pixel-world-map.zoomed {
+  width: auto;
+  max-width: none; /* override the 95% limit */
+  cursor: grab;
+  /* Ensure it breaks out of the flex center constraint */
+  flex-shrink: 0;
+}
+
+.pixel-world-map.zoomed .world-map-image {
+  max-height: none;
+  /* Make the map significantly larger to separate the buttons */
+  width: max(200vw, 1300px); 
+  max-width: none;
+  height: auto;
+}
+
+/* Adjust button scale in zoomed view if needed, or keep them constant size relative to screen (which they are) */
+/* But maybe we want them a bit bigger if the map is huge? No, keep standard size suitable for clicking. */
+
+
+.flag-img {
+  width: 28px;        /* 調整圖片大小 */
+  height: auto;
+  display: block;      /* 讓圖片獨佔一行或與文字搭配 */
+  margin-bottom: 2px;
+  border-radius: 2px; /* 微微圓角比較好看 */
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* 加一點陰影更有立體感 */
 }
 
 /* =========================================
@@ -430,7 +507,13 @@
   padding-left: 28px;
   cursor: pointer;
   font-size: 0.7rem;
+  
+  /* Compatibility fix: Add user-select for various browsers */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
+  
   margin-bottom: 5px;
 }
 
@@ -506,8 +589,8 @@
   .map-hotspot { padding: 5px; font-size: 0.6rem; }
   .flag-icon { font-size: 1rem; }
   /* 手機版可能需要微調按鈕位置，如果圖片本身比例沒變，百分比應該不用動 */
-  .kr-spot { left: 81%; top: 31%; } /* 微調避免重疊 */
-  .jp-spot { left: 88%; top: 38%; }
+  /* Replaced with logic from line 144 */
+
 
   /* 詳細地圖改為上下結構 */
   .detail-map-view.new-style {

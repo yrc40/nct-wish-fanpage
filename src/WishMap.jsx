@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'; 
+import React, { useState, useEffect, useMemo, useRef } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Tooltip } from 'react-leaflet';
 import { ArrowLeft, ExternalLink, Home, Map as MapIcon, List, X } from 'lucide-react';
@@ -20,6 +20,16 @@ let DefaultIcon = L.icon({
     iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+
+const countryNameMap = {
+  kr: 'KOREA',
+  tw: 'TAIWAN',
+  jp: 'JAPAN',
+  th: 'THAILAND',
+  es: 'SPAIN',
+  sg: 'SINGAPORE',
+  mo: 'MACAU',
+};
 
 // --- 修正 1：防止地圖一直縮回去的關鍵 ---
 const MapUpdater = ({ center, zoom }) => {
@@ -46,19 +56,71 @@ const WishMap = () => {
   const [view, setView] = useState('world'); 
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [activeTheme, setActiveTheme] = useState('all');
-  const [filters, setFilters] = useState({ mv: true, food: true, spot: true });
+  const [filters, setFilters] = useState({ mv: true, food: true, spot: true, venue: true });
   
   // 控制漂浮詳細頁面的狀態
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   // 控制手機版主題選單 Bottom Sheet (false=收起, true=展開)
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  
+  // 新增：洲別選擇狀態 (null = 世界地圖, 'asia' = 亞洲地圖)
+  const [continent, setContinent] = useState(null);
 
   // 存目前的縮放值 (預設 13)
   const [currentZoom, setCurrentZoom] = useState(13);
 
   const navigate = useNavigate(); 
+  
+  // Ref for auto-scrolling on mobile
+  const worldMapRef = useRef(null);
 
+  // Auto-scroll logic:
+  // 1. Mobile specific scroll when initially loading world view (optional now if we have zoom)
+  // 2. Scroll to continent when selected
+  useEffect(() => {
+    if (view === 'world' && worldMapRef.current) {
+        const scrollContainer = worldMapRef.current;
+        const scrollW = scrollContainer.scrollWidth;
+        const scrollH = scrollContainer.scrollHeight;
+
+        if (continent === 'asia') {
+            // Scroll to Asia (Right-Top area roughly)
+            // Center Asia horizontally ~80%
+            // Center Asia vertically ~35%
+            // Viewport center logic:
+            // scrollLeft = TargetX - ViewportWidth/2
+            const viewportW = scrollContainer.clientWidth;
+            const viewportH = scrollContainer.clientHeight;
+            
+            const targetX = scrollW * 0.82;
+            const targetY = scrollH * 0.35;
+
+            scrollContainer.scrollTo({
+                left: targetX - viewportW / 2,
+                top: targetY - viewportH / 2,
+                behavior: 'smooth'
+            });
+        } else if (continent === 'europe') {
+            // Scroll to Europe
+            const viewportW = scrollContainer.clientWidth;
+            const viewportH = scrollContainer.clientHeight;
+            
+            const targetX = scrollW * 0.53;
+            const targetY = scrollH * 0.30;
+
+            scrollContainer.scrollTo({
+                left: targetX - viewportW / 2,
+                top: targetY - viewportH / 2,
+                behavior: 'smooth'
+            });
+        } else if (!continent && window.innerWidth <= 768) {
+             // Mobile default scroll
+             scrollContainer.scrollLeft = scrollW * 0.5; 
+             scrollContainer.scrollTop = scrollContainer.scrollHeight * 0.1; 
+        }
+    }
+  }, [view, continent]);
 
   const mapCenter = useMemo(() => {
     if (!selectedCountry) return [37.5665, 126.9780]; // 預設值(沒選國家時)
@@ -80,6 +142,14 @@ const WishMap = () => {
       window.open(url, '_blank');
     } else {
       alert("Map link not available!");
+    }
+  };
+
+  const handleBack = () => {
+    if (continent) {
+        setContinent(null); // Back to World
+    } else {
+        navigate('/'); // Back to Home
     }
   };
 
@@ -107,21 +177,62 @@ const WishMap = () => {
     <div className="map-page-container">
       
       {view === 'world' && (
-        <div className="world-view">
+        <div className="world-view" ref={worldMapRef}>
            <div className="world-nav-bar">
-             <button className="pixel-btn-small" onClick={() => navigate('/')}>
-               <Home size={12} /> HOME
+             <button className="pixel-btn-small" onClick={handleBack}>
+               {continent ? <ArrowLeft size={12} /> : <Home size={12} />} 
+               {continent ? ' BACK' : ' HOME'}
              </button>
           </div>
-          <h1 className="pixel-title">SELECT COUNTRY</h1>
-          <div className="pixel-world-map">
+          <h1 className="pixel-title">{continent ? continent.toUpperCase() : 'SELECT CONTINENT'}</h1>
+          
+          <div className={`pixel-world-map ${continent ? 'zoomed' : ''}`}>
             <img src={worldMapImg} alt="World Map" className="world-map-image" />
-            <button className="map-hotspot kr-spot" onClick={() => handleCountrySelect('kr')}>
-              <span className="flag-icon">🇰🇷</span> KOREA
-            </button>
-            <button className="map-hotspot jp-spot" onClick={() => handleCountrySelect('jp')}>
-              <span className="flag-icon">🇯🇵</span> JAPAN
-            </button>
+            
+            {/* 洲別選擇按鈕 (只在未選擇洲時顯示) */}
+            {!continent && (
+                <>
+                    <button className="map-hotspot asia-spot" onClick={() => setContinent('asia')}>
+                        ASIA 🌏
+                    </button>
+                    <button className="map-hotspot europe-spot" onClick={() => setContinent('europe')}>
+                        EUROPE 🌍
+                    </button>
+                </>
+            )}
+
+            {/* 國家按鈕 (只在選擇亞洲時顯示) */}
+            {continent === 'asia' && (
+                <>
+                    <button className="map-hotspot kr-spot" onClick={() => handleCountrySelect('kr')}>
+                    <img src="https://flagcdn.com/w40/kr.png" alt="KR" className="flag-img" /> KOREA
+                    </button>
+                    <button className="map-hotspot jp-spot" onClick={() => handleCountrySelect('jp')}>
+                    <img src="https://flagcdn.com/w40/jp.png" alt="JP" className="flag-img" /> JAPAN
+                    </button>
+                    <button className="map-hotspot tw-spot" onClick={() => handleCountrySelect('tw')}>
+                    <img src="https://flagcdn.com/w40/tw.png" alt="TW" className="flag-img" /> TAIWAN
+                    </button>
+                    <button className="map-hotspot th-spot" onClick={() => handleCountrySelect('th')}>
+                    <img src="https://flagcdn.com/w40/th.png" alt="TH" className="flag-img" /> THAILAND
+                    </button>
+                    <button className="map-hotspot sg-spot" onClick={() => handleCountrySelect('sg')}>
+                    <img src="https://flagcdn.com/w40/sg.png" alt="SG" className="flag-img" /> SINGAPORE
+                    </button>
+                    <button className="map-hotspot mo-spot" onClick={() => handleCountrySelect('mo')}>
+                    <img src="https://flagcdn.com/w40/mo.png" alt="MO" className="flag-img" /> MACAU
+                    </button>
+                 </>
+            )}
+
+            {/* 國家按鈕 (只在選擇歐洲時顯示) */}
+            {continent === 'europe' && (
+                <>
+                    <button className="map-hotspot es-spot" onClick={() => handleCountrySelect('es')}>
+                    <img src="https://flagcdn.com/w40/es.png" alt="ES" className="flag-img" /> SPAIN
+                    </button>
+                 </>
+            )}
           </div>
         </div>
       )}
@@ -143,14 +254,14 @@ const WishMap = () => {
                 </button>
                 
                 <h2 className="sidebar-title">
-                  {selectedCountry === 'kr' ? 'SEOUL MAP' : 'TOKYO MAP'}
+                  {`WISH IN ${countryNameMap[selectedCountry] || selectedCountry?.toUpperCase() || ''}`}
                 </h2>
                 
                 <h3 className="section-subtitle"><MapIcon size={12}/> THEMES</h3>
                 
                 {/* === 修改開始：把 theme-grid 改成 theme-list === */}
                 <div className="theme-list">
-                    {mapThemes[selectedCountry].map((theme) => (
+                    {mapThemes[selectedCountry]?.map((theme) => (
                         <button 
                             key={theme.id}
                             // 判斷是否選中，加上 active class
@@ -180,6 +291,10 @@ const WishMap = () => {
                       <label className="pixel-checkbox">
                         <input type="checkbox" checked={filters.spot} onChange={() => handleFilterChange('spot')} />
                         <span className="checkmark"></span> Visit
+                      </label>
+                      <label className="pixel-checkbox">
+                        <input type="checkbox" checked={filters.venue} onChange={() => handleFilterChange('venue')} />
+                        <span className="checkmark"></span> Venue
                       </label>
                     </div>
                 </div>

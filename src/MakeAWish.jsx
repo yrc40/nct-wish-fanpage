@@ -28,7 +28,6 @@ const MakeAWish = () => {
     const spawnDoll = () => {
       // 修正點：加個保護機制，如果沒有圖片就不執行，避免錯誤
       if (dollImages.length === 0) return;
-      console.log("嘗試產生娃娃..."); // 打開 F12 看有沒有這行字
 
       const randomDoll = dollImages[Math.floor(Math.random() * dollImages.length)];
       const newDoll = {
@@ -41,7 +40,7 @@ const MakeAWish = () => {
     };
 
     // 一進來先飛一隻
-    //spawnDoll();
+    spawnDoll();
 
     // 設定計時器
     const intervalId = setInterval(spawnDoll, 15000); 
@@ -109,7 +108,7 @@ const MakeAWish = () => {
           >
             {/* 圖示 */}
             <div className={`pixel-icon ${wish.type}`}>
-               {wish.type === 'star' ? <Star size={32} fill="#FFD700" /> : <Heart size={32} fill="#FF69B4" />}
+               {wish.type === 'star' ? <Star size={32} fill="#FFD700" stroke="#b8860b" /> : <Heart size={32} fill="#CD5C5C" stroke="#8b0000" />}
             </div>
             {/* 文字氣泡 */}
             <span className="wish-bubble">{wish.text}</span>
@@ -133,11 +132,13 @@ const MakeAWish = () => {
         </form>
         
         <div className="pixel-nav">
-            <Link to="/map" style={{ textDecoration: 'none', color: '#88ff88' }}>
+            <Link to="/map" style={{ textDecoration: 'none', color: '#deb887' }}>
                 [ Map ]
             </Link>
-            <span>[ Style ]</span>
-            <span>[ Dict ]</span>
+            <span style={{ color: '#8b4513' }}>[ Style ]</span>
+            <Link to="/list" style={{ textDecoration: 'none', color: '#ffd700' }}>
+               [ List ]
+            </Link>
         </div>
       </footer>
     </div>
